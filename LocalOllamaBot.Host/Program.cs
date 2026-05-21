@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-var token = "8793545135:AAEH05RU3D0WLitYVA0osIMGCVN76jZ9wcc";
+var token = "my-token";
 
 var host = Host.CreateDefaultBuilder(args)
     .ConfigureServices((context, services) =>
