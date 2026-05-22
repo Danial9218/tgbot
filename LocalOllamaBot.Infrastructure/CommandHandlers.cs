@@ -4,24 +4,30 @@ using Telegram.Bot.Types;
 
 namespace LocalOllamaBot.Infrastructure;
 
+// Интерфейс обработчика команды (звено цепи)
 public interface ICommandHandler
 {
     Task<bool> HandleAsync(Message message, CancellationToken ct);
     void SetNext(ICommandHandler next);
 }
 
+// Абстрактный базовый класс для всех обработчиков
 public abstract class CommandHandlerBase : ICommandHandler
 {
-    private ICommandHandler? _next;
+    private ICommandHandler? _nextHandler;
 
-    public void SetNext(ICommandHandler next) => _next = next;
+    public void SetNext(ICommandHandler next) => _nextHandler = next;
 
     public virtual async Task<bool> HandleAsync(Message message, CancellationToken ct)
     {
-        return _next != null && await _next.HandleAsync(message, ct);
+        // Если не обработали, передаём дальше
+        if (_nextHandler != null)
+            return await _nextHandler.HandleAsync(message, ct);
+        return false;
     }
 }
 
+// Обработчик команды /start
 public class StartCommandHandler : CommandHandlerBase
 {
     private readonly ITelegramBot _bot;
@@ -35,16 +41,19 @@ public class StartCommandHandler : CommandHandlerBase
 
     public override async Task<bool> HandleAsync(Message message, CancellationToken ct)
     {
-        if (message.Text?.StartsWith("/start") == true)
+        if (message.Text != null && message.Text.StartsWith("/start"))
         {
-            _logger.LogInformation("Обработка /start от {ChatId}", message.Chat.Id);
-            await _bot.SendMessageAsync(message.Chat.Id, "🤖 Привет! Я бот на Qwen3.5 через Ollama. Задай любой вопрос.", ct);
-            return true;
+            _logger.LogInformation("Пользователь {ChatId} написал /start", message.Chat.Id);
+            await _bot.SendMessageAsync(message.Chat.Id, 
+                "Привет! Я бот на локальной нейросети Qwen3.5. Задавай любые вопросы, я отвечу.", 
+                ct);
+            return true; // команда обработана
         }
         return await base.HandleAsync(message, ct);
     }
 }
 
+// Обработчик команды /help
 public class HelpCommandHandler : CommandHandlerBase
 {
     private readonly ITelegramBot _bot;
@@ -58,9 +67,14 @@ public class HelpCommandHandler : CommandHandlerBase
 
     public override async Task<bool> HandleAsync(Message message, CancellationToken ct)
     {
-        if (message.Text?.StartsWith("/help") == true)
+        if (message.Text != null && message.Text.StartsWith("/help"))
         {
-            await _bot.SendMessageAsync(message.Chat.Id, "📖 Команды:\n/start - приветствие\n/help - помощь\n/stats - статистика\n/clear - очистить историю", ct);
+            var helpText = "Доступные команды:\n" +
+                           "/start – запустить бота\n" +
+                           "/help – показать эту справку\n" +
+                           "/stats – статистика сессии (позже добавлю)\n" +
+                           "/clear – очистить историю диалога";
+            await _bot.SendMessageAsync(message.Chat.Id, helpText, ct);
             return true;
         }
         return await base.HandleAsync(message, ct);

@@ -21,26 +21,34 @@ public class OllamaService : IOllamaService
 
     public async Task<string> GenerateResponseAsync(string prompt, CancellationToken cancellationToken)
     {
-        var request = new
+        // Создаём объект запроса для Ollama
+        var requestPayload = new
         {
-            model = "qwen3.5:latest",
+            model = "qwen3.5:latest", // имя модели, которую скачал через ollama 
             prompt = prompt,
-            stream = false,
-            options = new { temperature = 0.7, max_tokens = 500 }
+            stream = false,          // не стримим, ждём полный ответ
+            options = new
+            {
+                temperature = 0.7,
+                max_tokens = 500
+            }
         };
-        var content = new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json");
-
+        
+        var content = new StringContent(JsonSerializer.Serialize(requestPayload), Encoding.UTF8, "application/json");
+        
         try
         {
+            _logger.LogInformation("Отправка POST запроса в Ollama...");
             var response = await _httpClient.PostAsync(GenerateUrl, content, cancellationToken);
             response.EnsureSuccessStatusCode();
+            
             var ollamaResponse = await response.Content.ReadFromJsonAsync<OllamaGenerateResponse>(cancellationToken);
-            return ollamaResponse?.response ?? "Нет ответа от модели.";
+            return ollamaResponse?.response ?? "Ollama вернул пустой ответ!";
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Ошибка при обращении к Ollama");
-            return "Ошибка: не удалось подключиться к Ollama. Запустите `ollama serve`.";
+            _logger.LogError(ex, "Ошибка при вызове Ollama API");
+            return "Ошибка при обращении к Ollama. Убедитесь, что он запущен и модель загружена.";
         }
     }
 
@@ -57,8 +65,9 @@ public class OllamaService : IOllamaService
         }
     }
 
+    // Вспомогательный класс для десериализации ответа Ollama
     private class OllamaGenerateResponse
     {
         public string response { get; set; } = string.Empty;
     }
-}
+}   

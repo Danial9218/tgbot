@@ -11,25 +11,30 @@ public class TelegramBotService : ITelegramBot
     private readonly ITelegramBotClient _botClient;
     private readonly ILogger<TelegramBotService> _logger;
     private readonly IChatService _chatService;
-    private readonly ICommandHandler _commandChain;
+    private readonly ICommandHandler _commandChain; // цепочка обработчиков команд
 
-    // НОВЫЙ КОНСТРУКТОР с передачей HttpClient (уже настроенного на прокси)
-    public TelegramBotService(string token, HttpClient httpClient, IChatService chatService, ILogger<TelegramBotService> logger)
+    public TelegramBotService(string token, IChatService chatService, ILogger<TelegramBotService> logger)
     {
-        _botClient = new TelegramBotClient(token, httpClient);
+        _botClient = new TelegramBotClient(token);
         _chatService = chatService;
         _logger = logger;
-
-        // Цепочка обязанностей (без изменений)
+        
+        // Строим цепочку: /start -> /help -> дальше другие команды
         var startHandler = new StartCommandHandler(this, logger);
         var helpHandler = new HelpCommandHandler(this, logger);
         startHandler.SetNext(helpHandler);
-        _commandChain = startHandler;
+        _commandChain = startHandler; // начало цепочки
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        _botClient.StartReceiving(HandleUpdateAsync, HandleErrorAsync, cancellationToken: cancellationToken);
+        _logger.LogInformation("Запуск Telegram бота...");
+        _botClient.StartReceiving(
+            HandleUpdateAsync,
+            HandleErrorAsync,
+            cancellationToken: cancellationToken
+        );
+        // Бесконечное ожидание
         await Task.Delay(Timeout.Infinite, cancellationToken);
     }
 
@@ -38,12 +43,20 @@ public class TelegramBotService : ITelegramBot
         if (update.Message is not { } message || string.IsNullOrEmpty(message.Text))
             return;
 
+        // Сначала пробуем обработать как команду 
         var handled = await _commandChain.HandleAsync(message, ct);
-        if (handled) return;
+        if (handled) return; // команда обработана, выходим
 
-        _logger.LogInformation("Сообщение от {ChatId}: {Text}", message.Chat.Id, message.Text);
+        // Если не команда - отправляем в ллмку
+        _logger.LogInformation("Получено сообщение от {ChatId}: {Text}", message.Chat.Id, message.Text);
+        
+        // Отправляет индикатор "печатает"
         await SendTypingAsync(message.Chat.Id, ct);
+        
+        // Получает ответ от нейросети
         var response = await _chatService.ProcessMessageAsync(message.Chat.Id, message.Text, ct);
+        
+        // Отправляет ответ пользователю
         await SendMessageAsync(message.Chat.Id, response, ct);
     }
 
@@ -55,13 +68,13 @@ public class TelegramBotService : ITelegramBot
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Не удалось отправить индикатор печати");
+            _logger.LogWarning(ex, "Не удалось отправить индикатор печати (возможно, чат заблокирован)");
         }
     }
 
     private Task HandleErrorAsync(ITelegramBotClient client, Exception exception, CancellationToken ct)
     {
-        _logger.LogError(exception, "Ошибка Telegram бота");
+        _logger.LogError(exception, "Критическая ошибка Telegram бота");
         return Task.CompletedTask;
     }
 
