@@ -43,7 +43,7 @@ public class TelegramBotService : ITelegramBot
         if (update.Message is not { } message || string.IsNullOrEmpty(message.Text))
             return;
 
-        // Сначала пробуем обработать как команду 
+        // Сначала  обработать как команду 
         var handled = await _commandChain.HandleAsync(message, ct);
         if (handled) return; // команда обработана, выходим
 

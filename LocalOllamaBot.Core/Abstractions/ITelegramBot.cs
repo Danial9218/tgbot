@@ -2,7 +2,7 @@
 
 public interface ITelegramBot
 {
-    // Запустить бота (начать приём сообщений)
+    // Запустить бота 
     Task StartAsync(CancellationToken cancellationToken);
     
     // Отправить сообщение в чат

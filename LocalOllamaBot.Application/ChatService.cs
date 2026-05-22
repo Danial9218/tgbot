@@ -29,7 +29,7 @@ public class ChatService : IChatService
             return "Ошибка: Ollama не запущен. Пожалуйста, запустите `ollama serve`.";
         }
 
-        // Загружаем историю чата (если есть)
+        // Загружаем историю чаа
         var history = _sessionManager.GetHistory(chatId);
         // Строим промпт с помощью выбранной стратегии
         var prompt = _strategy.BuildPrompt(userMessage, history);
@@ -39,7 +39,7 @@ public class ChatService : IChatService
         // Сохраняем сообщение пользователя в историю
         _sessionManager.AddMessage(chatId, "Пользователь: " + userMessage);
         
-        // Получаем ответ от нейросети
+        // Получаем ответ от НС
         var response = await _ollama.GenerateResponseAsync(prompt, cancellationToken);
         
         // Сохраняем ответ бота в историю

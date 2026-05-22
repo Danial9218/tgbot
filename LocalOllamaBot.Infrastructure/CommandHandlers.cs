@@ -4,7 +4,7 @@ using Telegram.Bot.Types;
 
 namespace LocalOllamaBot.Infrastructure;
 
-// Интерфейс обработчика команды (звено цепи)
+// Интерфейс обработчика команды 
 public interface ICommandHandler
 {
     Task<bool> HandleAsync(Message message, CancellationToken ct);
