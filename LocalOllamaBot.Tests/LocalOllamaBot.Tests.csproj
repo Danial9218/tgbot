@@ -20,4 +20,8 @@
         <ProjectReference Include="..\LocalOllamaBot.Infrastructure\LocalOllamaBot.Infrastructure.csproj" />
         <ProjectReference Include="..\LocalOllamaBot.Host\LocalOllamaBot.Host.csproj" />
     </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="TestResults\" />
+    </ItemGroup>
 </Project>
