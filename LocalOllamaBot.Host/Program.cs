@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 //ТОКЕН ТЕЛЕГРАМ 
 
-string telegramToken = "токен"; 
+string telegramToken = "8793545135:AAEH05RU3D0WLitYVA0osIMGCVN76jZ9wcc"; 
 
 Console.WriteLine(" Локальный бот с нейросетью Qwen3.5");
 Console.WriteLine("Проверяем подключение к Ollama...");

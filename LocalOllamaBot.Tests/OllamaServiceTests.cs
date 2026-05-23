@@ -97,4 +97,57 @@ public class OllamaServiceTests
         var result = await service.GenerateResponseAsync("test", CancellationToken.None);
         Assert.Contains("Ошибка", result);
     }
+    
+    [Fact]
+    public async Task GenerateResponseAsync_WhenEmptyJson_ReturnsEmptyString()
+    {
+        var handlerMock = new Mock<HttpMessageHandler>();
+
+        handlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("{}")
+            });
+
+        var client = new HttpClient(handlerMock.Object);
+
+        var service = new OllamaService(
+            client,
+            Mock.Of<ILogger<OllamaService>>());
+
+        var result = await service.GenerateResponseAsync(
+            "test",
+            CancellationToken.None);
+
+        Assert.True(
+            string.IsNullOrEmpty(result),
+            "Expected empty string when Ollama returns empty JSON");
+    }
+
+    [Fact]
+    public async Task IsModelAvailableAsync_WhenExceptionThrown_ReturnsFalse()
+    {
+        var handlerMock = new Mock<HttpMessageHandler>();
+
+        handlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ThrowsAsync(new HttpRequestException());
+
+        var client = new HttpClient(handlerMock.Object);
+
+        var service = new OllamaService(
+            client,
+            Mock.Of<ILogger<OllamaService>>());
+
+        var result = await service.IsModelAvailableAsync(CancellationToken.None);
+
+        Assert.False(result);
+    }
 }

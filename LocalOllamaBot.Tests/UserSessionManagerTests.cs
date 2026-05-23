@@ -25,4 +25,49 @@ public class UserSessionManagerTests
         var history = manager.GetHistory(888);
         Assert.Empty(history);
     }
+    
+    
+    [Fact]
+    public void GetHistory_ShouldReturnCopy()
+    {
+        var manager = UserSessionManager.Instance;
+
+        long chatId = 777;
+
+        manager.AddMessage(chatId, "msg1");
+
+        var history = manager.GetHistory(chatId);
+
+        history.Add("hack");
+
+        var original = manager.GetHistory(chatId);
+
+        Assert.DoesNotContain("hack", original);
+    }
+
+    [Fact]
+    public void AddMessage_ShouldCreateHistoryAutomatically()
+    {
+        var manager = UserSessionManager.Instance;
+
+        long chatId = 123456;
+
+        manager.AddMessage(chatId, "hello");
+
+        var history = manager.GetHistory(chatId);
+
+        Assert.Single(history);
+    }
+
+    [Fact]
+    public void Singleton_ShouldReturnSameInstance()
+    {
+        var first = UserSessionManager.Instance;
+        var second = UserSessionManager.Instance;
+
+        Assert.Same(first, second);
+    }
+
 }
+
+   

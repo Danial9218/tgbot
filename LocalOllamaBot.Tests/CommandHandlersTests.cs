@@ -56,5 +56,75 @@ public class CommandHandlersTests
         nextMock.Verify(x => x.HandleAsync(It.IsAny<Message>(), It.IsAny<CancellationToken>()), Times.Once);
         mockBot.Verify(b => b.SendMessageAsync(It.IsAny<long>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
+    [Fact]
+    public async Task StartCommandHandler_WithNullText_ShouldReturnFalse()
+    {
+        var mockBot = new Mock<ITelegramBot>();
+
+        var handler = new StartCommandHandler(
+            mockBot.Object,
+            Mock.Of<ILogger>());
+
+        var message = new Message
+        {
+            Chat = new Chat { Id = 1 },
+            Text = null
+        };
+
+        var result = await handler.HandleAsync(message, CancellationToken.None);
+
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task HelpCommandHandler_WithUnknownCommand_ShouldReturnFalse()
+    {
+        var mockBot = new Mock<ITelegramBot>();
+
+        var handler = new HelpCommandHandler(
+            mockBot.Object,
+            Mock.Of<ILogger>());
+
+        var message = new Message
+        {
+            Chat = new Chat { Id = 1 },
+            Text = "/unknown"
+        };
+
+        var result = await handler.HandleAsync(message, CancellationToken.None);
+
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task StartCommandHandler_ShouldNotCallNextHandler_WhenHandled()
+    {
+        var mockBot = new Mock<ITelegramBot>();
+
+        var next = new Mock<ICommandHandler>();
+
+        var handler = new StartCommandHandler(
+            mockBot.Object,
+            Mock.Of<ILogger>());
+
+        handler.SetNext(next.Object);
+
+        var message = new Message
+        {
+            Chat = new Chat { Id = 1 },
+            Text = "/start"
+        };
+
+        var result = await handler.HandleAsync(message, CancellationToken.None);
+
+        Assert.True(result);
+
+        next.Verify(x =>
+                x.HandleAsync(It.IsAny<Message>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    
+    
 }
 

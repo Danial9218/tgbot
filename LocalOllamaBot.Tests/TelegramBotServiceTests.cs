@@ -14,8 +14,14 @@ public class TelegramBotServiceTests
     public void Constructor_DoesNotThrow()
     {
         var mockChat = new Mock<IChatService>();
+
         var logger = Mock.Of<ILogger<TelegramBotService>>();
-        var service = new TelegramBotService("fake", mockChat.Object, logger);
+
+        var service = new TelegramBotService(
+            "fake",
+            mockChat.Object,
+            logger);
+
         Assert.NotNull(service);
     }
 
@@ -23,32 +29,67 @@ public class TelegramBotServiceTests
     public async Task SendMessageAsync_DoesNotThrow()
     {
         var mockChat = new Mock<IChatService>();
+
         var logger = Mock.Of<ILogger<TelegramBotService>>();
-        var service = new TelegramBotService("fake", mockChat.Object, logger);
+
+        var service = new TelegramBotService(
+            "fake",
+            mockChat.Object,
+            logger);
 
         var mockBotClient = new Mock<ITelegramBotClient>();
-        var field = typeof(TelegramBotService).GetField("_botClient",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+        var field = typeof(TelegramBotService)
+            .GetField(
+                "_botClient",
+                System.Reflection.BindingFlags.NonPublic |
+                System.Reflection.BindingFlags.Instance);
+
         field?.SetValue(service, mockBotClient.Object);
 
-        await service.SendMessageAsync(123, "test", CancellationToken.None);
-        // Без проверки, просто убеждаемся, что метод не падает
+        var exception = await Record.ExceptionAsync(async () =>
+        {
+            await service.SendMessageAsync(
+                123,
+                "test",
+                CancellationToken.None);
+        });
+
+        Assert.Null(exception);
     }
 
     [Fact]
     public void HandleErrorAsync_DoesNotThrow()
     {
         var mockChat = new Mock<IChatService>();
-        var logger = Mock.Of<ILogger<TelegramBotService>>();
-        var service = new TelegramBotService("fake", mockChat.Object, logger);
 
-        var method = typeof(TelegramBotService).GetMethod("HandleErrorAsync",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        var logger = Mock.Of<ILogger<TelegramBotService>>();
+
+        var service = new TelegramBotService(
+            "fake",
+            mockChat.Object,
+            logger);
+
+        var method = typeof(TelegramBotService)
+            .GetMethod(
+                "HandleErrorAsync",
+                System.Reflection.BindingFlags.NonPublic |
+                System.Reflection.BindingFlags.Instance);
+
         var exception = Record.Exception(() =>
         {
-            var task = method?.Invoke(service, new object[] { Mock.Of<ITelegramBotClient>(), new Exception("error"), CancellationToken.None }) as Task;
+            var task = method?.Invoke(
+                service,
+                new object[]
+                {
+                    Mock.Of<ITelegramBotClient>(),
+                    new Exception("error"),
+                    CancellationToken.None
+                }) as Task;
+
             task?.GetAwaiter().GetResult();
         });
+
         Assert.Null(exception);
     }
 }
