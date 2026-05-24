@@ -4,9 +4,7 @@ using LocalOllamaBot.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("LocalOllamaBot.Tests")]
 //ТОКЕН ТЕЛЕГРАМ 
 
 string telegramToken = "8793545135:AAEH05RU3D0WLitYVA0osIMGCVN76jZ9wcc"; 
