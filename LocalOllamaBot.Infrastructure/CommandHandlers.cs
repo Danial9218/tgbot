@@ -80,3 +80,4 @@ public class HelpCommandHandler : CommandHandlerBase
         return await base.HandleAsync(message, ct);
     }
 }
+
