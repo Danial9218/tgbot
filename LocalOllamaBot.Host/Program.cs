@@ -5,11 +5,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-//ТОКЕН ТЕЛЕГРАМ 
-
+// ТОКЕН ТЕЛЕГРАМ 
 string telegramToken = "8793545135:AAEH05RU3D0WLitYVA0osIMGCVN76jZ9wcc"; 
 
-Console.WriteLine(" Локальный бот с нейросетью Qwen3.5");
+Console.WriteLine("Локальный бот с нейросетью Qwen3.5");
 Console.WriteLine("Проверяем подключение к Ollama...");
 
 // Создаём хост приложения
@@ -24,7 +23,7 @@ var host = Host.CreateDefaultBuilder(args)
         });
 
         // Выбираем стратегию построения промпта (с историей или без)
-        services.AddSingleton<IPromptStrategy, HistoryAwarePromptStrategy>(); 
+        services.AddSingleton<IPromptStrategy, DefaultPromptStrategy>(); //DefaultPromptStrategy, HistoryAwarePromptStrategy 
         
         // Регистрируем сервис чата
         services.AddSingleton<IChatService, ChatService>();
@@ -37,8 +36,17 @@ var host = Host.CreateDefaultBuilder(args)
             return new TelegramBotService(telegramToken, chatService, logger);
         });
 
-        // Логирование в консоль
-        services.AddLogging(configure => configure.AddConsole());
+        //НАСТРОЙКА ЛОГИРОВАНИЯ 
+        services.AddLogging(configure => 
+        {
+            configure.AddConsole();
+            configure.SetMinimumLevel(LogLevel.Warning); // Показывает только ошибки 
+            
+            // убрал HTTP и другой мусор
+            configure.AddFilter("System.Net.Http.HttpClient", LogLevel.Warning);
+            configure.AddFilter("Microsoft", LogLevel.Warning);
+        });
+        // 
     })
     .Build();
 

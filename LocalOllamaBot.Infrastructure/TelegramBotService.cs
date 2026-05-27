@@ -37,26 +37,47 @@ public class TelegramBotService : ITelegramBot
         // Бесконечное ожидание
         await Task.Delay(Timeout.Infinite, cancellationToken);
     }
-
+    
     private async Task HandleUpdateAsync(ITelegramBotClient client, Update update, CancellationToken ct)
     {
         if (update.Message is not { } message || string.IsNullOrEmpty(message.Text))
             return;
 
-        // Сначала  обработать как команду 
+        // КРАСИВЫЙ ВЫВОД В КОНСОЛЬ 
+        Console.ForegroundColor = ConsoleColor.Cyan;
+        Console.Write($"[{DateTime.Now:HH:mm:ss}] ");
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.Write("ПОЛЬЗОВАТЕЛЬ");
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.Write($" [{message.Chat.Id}]: ");
+        Console.ForegroundColor = ConsoleColor.Black;
+        Console.WriteLine($"{message.Text}");
+        Console.ResetColor();
+        // 
+        
+        // Сначала обработать как команду 
         var handled = await _commandChain.HandleAsync(message, ct);
-        if (handled) return; // команда обработана, выходим
+        if (handled) return;
 
-        // Если не команда - отправляем в ллмку
         _logger.LogInformation("Получено сообщение от {ChatId}: {Text}", message.Chat.Id, message.Text);
-        
-        // Отправляет индикатор "печатает"
+    
         await SendTypingAsync(message.Chat.Id, ct);
-        
-        // Получает ответ от нейросети
+    
         var response = await _chatService.ProcessMessageAsync(message.Chat.Id, message.Text, ct);
+    
+        // КРАСИВЫЙ ВЫВОД ОТВЕТА 
+        Console.ForegroundColor = ConsoleColor.Cyan;
+        Console.Write($"[{DateTime.Now:HH:mm:ss}] ");
+        Console.ForegroundColor = ConsoleColor.Magenta;
+        Console.Write("БОТ");
+        Console.ForegroundColor = ConsoleColor.Black;
+        Console.Write($" [{message.Chat.Id}]: ");
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.WriteLine($"{response}");
+        Console.ResetColor();
+        Console.WriteLine(); // пустая строка для разделения
+        // 
         
-        // Отправляет ответ пользователю
         await SendMessageAsync(message.Chat.Id, response, ct);
     }
 
