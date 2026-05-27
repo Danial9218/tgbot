@@ -4,9 +4,11 @@ using LocalOllamaBot.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Telegram.Bot;
+using Telegram.Bot.Types;
 
 // ТОКЕН ТЕЛЕГРАМ 
-string telegramToken = "8793545135:AAEH05RU3D0WLitYVA0osIMGCVN76jZ9wcc"; 
+string telegramToken = "8793545135:AAH3LqzDRYMJQTzTql9WfkbaeTzec-jYRIQ"; 
 
 Console.WriteLine("Локальный бот с нейросетью Qwen3.5");
 Console.WriteLine("Проверяем подключение к Ollama...");
@@ -52,6 +54,27 @@ var host = Host.CreateDefaultBuilder(args)
 
 // экземпляр бота и запускаем
 var bot = host.Services.GetRequiredService<ITelegramBot>();
+var botClient = new TelegramBotClient(telegramToken);
+
+// МЕНЮ КОМАНД
+var commands = new List<BotCommand>
+{
+    new BotCommand { Command = "start", Description = "Запустить бота" },
+    new BotCommand { Command = "help", Description = "Показать справку" },
+    new BotCommand { Command = "stats", Description = "Статистика сессии" },
+    new BotCommand { Command = "clear", Description = "Очистить историю" }
+};
+
+try
+{
+    await botClient.SetMyCommandsAsync(commands);
+    Console.WriteLine("Меню команд установлено");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Ошибка при установке меню: {ex.Message}");
+}
+
 Console.WriteLine("Бот запущен. Ожидаю сообщения...");
 Console.WriteLine("Нажмите Ctrl+C для остановки.");
 

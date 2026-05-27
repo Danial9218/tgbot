@@ -29,6 +29,21 @@ public class CommandHandlerBaseTests
         Assert.True(result);
         mockNext.Verify(x => x.HandleAsync(It.IsAny<Message>(), It.IsAny<CancellationToken>()), Times.Once);
     }
+    
+    [Fact]
+    public void SetNext_ShouldSetNextHandler()
+    {
+        var handler = new TestCommandHandler();
+        var nextHandler = new TestCommandHandler();
+    
+        handler.SetNext(nextHandler);
+    
+        var field = typeof(CommandHandlerBase).GetField("_nextHandler", 
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        var value = field?.GetValue(handler);
+    
+        Assert.Same(nextHandler, value);
+    }
 
     private class TestCommandHandler : CommandHandlerBase { }
 }

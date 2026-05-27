@@ -224,4 +224,29 @@ public class CommandHandlersTests
         next.Verify(x => x.HandleAsync(It.IsAny<Message>(), It.IsAny<CancellationToken>()), Times.Once);
         mockBot.Verify(b => b.SendMessageAsync(It.IsAny<long>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
+    
+    [Fact]
+    public async Task FullChain_ShouldHandleCorrectCommand()
+    {
+        var mockBot = new Mock<ITelegramBot>();
+        var logger = Mock.Of<ILogger>();
+    
+        var startHandler = new StartCommandHandler(mockBot.Object, logger);
+        var helpHandler = new HelpCommandHandler(mockBot.Object, logger);
+        startHandler.SetNext(helpHandler);
+    
+        // Проверяем что /start обрабатывается первым
+        var startMsg = new Message { Chat = new Chat { Id = 1 }, Text = "/start" };
+        var startResult = await startHandler.HandleAsync(startMsg, CancellationToken.None);
+        Assert.True(startResult);
+        mockBot.Verify(b => b.SendMessageAsync(1, It.Is<string>(s => s.Contains("Привет")), It.IsAny<CancellationToken>()), Times.Once);
+    
+        mockBot.Invocations.Clear();
+    
+        // Проверяем что /help обрабатывается вторым
+        var helpMsg = new Message { Chat = new Chat { Id = 1 }, Text = "/help" };
+        var helpResult = await startHandler.HandleAsync(helpMsg, CancellationToken.None);
+        Assert.True(helpResult);
+        mockBot.Verify(b => b.SendMessageAsync(1, It.Is<string>(s => s.Contains("команды")), It.IsAny<CancellationToken>()), Times.Once);
+    }
 }

@@ -35,8 +35,14 @@ public class TelegramBotServiceCoverageTests
                 System.Reflection.BindingFlags.NonPublic |
                 System.Reflection.BindingFlags.Instance);
 
+        var chainField = typeof(TelegramBotService)
+            .GetField("_commandChain",
+                System.Reflection.BindingFlags.NonPublic |
+                System.Reflection.BindingFlags.Instance);
+
         Assert.NotNull(botField?.GetValue(service));
         Assert.NotNull(chatField?.GetValue(service));
+        Assert.NotNull(chainField?.GetValue(service));
     }
 
     [Fact]
