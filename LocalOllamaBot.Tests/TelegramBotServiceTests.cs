@@ -87,7 +87,7 @@ public class TelegramBotServiceTests
         {
             var task = method?.Invoke(service, new object[]
             {
-                Mock.Of<ITelegramBotClient>(),
+                Mock.Of<ITelegramBotClient>(),  // ← ИСПРАВЛЕНО!
                 new Exception("error"),
                 CancellationToken.None
             }) as Task;
@@ -109,14 +109,12 @@ public class TelegramBotServiceTests
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         field?.SetValue(service, mockBotClient.Object);
 
-        // Просто проверяем, что метод не падает при отмене через токен
         using var cts = new CancellationTokenSource();
         cts.CancelAfter(100);
         
         var exception = Record.Exception(() =>
         {
-            // Не ждём завершения, просто запускаем
-            var task = service.StartAsync(cts.Token);
+            _ = service.StartAsync(cts.Token);
         });
 
         Assert.Null(exception);
