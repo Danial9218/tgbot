@@ -135,4 +135,40 @@ public class TelegramBotServiceBranchTests
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
+    
+    [Fact]
+    public async Task HandleUpdateAsync_WithStartCommand_ShouldNotCallChatService()
+    {
+        var mockChat = new Mock<IChatService>();
+
+        var service = new TelegramBotService(
+            "123456:TEST_TOKEN",
+            mockChat.Object,
+            Mock.Of<ILogger<TelegramBotService>>());
+
+        var update = new Update
+        {
+            Message = new Message
+            {
+                Chat = new Chat
+                {
+                    Id = 1
+                },
+                Text = "/start"
+            }
+        };
+
+        await Record.ExceptionAsync(async () =>
+        {
+            await InvokeHandleUpdateAsync(service, update);
+        });
+
+        mockChat.Verify(
+            x => x.ProcessMessageAsync(
+                It.IsAny<long>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
 }
+

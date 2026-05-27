@@ -150,4 +150,26 @@ public class OllamaServiceTests
 
         Assert.False(result);
     }
+    
+    [Fact]
+    public async Task GenerateResponseAsync_WhenNetworkError_ReturnsErrorMessage()
+    {
+        // Создаём мок, который выбрасывает исключение при любом запросе
+        var handlerMock = new Mock<HttpMessageHandler>();
+        handlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ThrowsAsync(new HttpRequestException("Network error"));
+
+        var httpClient = new HttpClient(handlerMock.Object);
+        var logger = Mock.Of<ILogger<OllamaService>>();
+        var service = new OllamaService(httpClient, logger);
+
+        var result = await service.GenerateResponseAsync("test", CancellationToken.None);
+    
+        // Проверяем, что вернулось сообщение об ошибке
+        Assert.Contains("Ошибка", result);
+    }
 }
