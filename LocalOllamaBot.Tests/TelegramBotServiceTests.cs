@@ -87,7 +87,7 @@ public class TelegramBotServiceTests
         {
             var task = method?.Invoke(service, new object[]
             {
-                Mock.Of<ITelegramBotClient>(),  // ← ИСПРАВЛЕНО!
+                Mock.Of<ITelegramBotClient>(),  
                 new Exception("error"),
                 CancellationToken.None
             }) as Task;
