@@ -4,6 +4,10 @@ using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
+
+
+
+
 namespace LocalOllamaBot.Infrastructure;
 
 public class TelegramBotService : ITelegramBot
@@ -37,6 +41,7 @@ public class TelegramBotService : ITelegramBot
         // Бесконечное ожидание
         await Task.Delay(Timeout.Infinite, cancellationToken);
     }
+    
     
     private async Task HandleUpdateAsync(ITelegramBotClient client, Update update, CancellationToken ct)
     {

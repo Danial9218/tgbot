@@ -3,6 +3,7 @@ using LocalOllamaBot.Infrastructure;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Telegram.Bot.Types;
+using Telegram.Bot;
 using Xunit;
 
 namespace LocalOllamaBot.Tests;
@@ -21,7 +22,7 @@ public class TelegramBotServiceBranchTests
 
         Assert.NotNull(method);
 
-        var task = method!.Invoke(
+        var task = method.Invoke(
             service,
             new object[]
             {
@@ -109,6 +110,18 @@ public class TelegramBotServiceBranchTests
             mockChat.Object,
             Mock.Of<ILogger<TelegramBotService>>());
 
+        // Мокаем Telegram client
+        var mockBotClient = new Mock<ITelegramBotClient>();
+
+        var botField = typeof(TelegramBotService)
+            .GetField(
+                "_botClient",
+                System.Reflection.BindingFlags.NonPublic |
+                System.Reflection.BindingFlags.Instance);
+        
+        Assert.NotNull(botField);
+        botField.SetValue(service, mockBotClient.Object);
+
         var update = new Update
         {
             Message = new Message
@@ -126,7 +139,7 @@ public class TelegramBotServiceBranchTests
             await InvokeHandleUpdateAsync(service, update);
         });
 
-        Assert.NotNull(exception);
+        Assert.Null(exception);
 
         mockChat.Verify(
             x => x.ProcessMessageAsync(
@@ -146,6 +159,24 @@ public class TelegramBotServiceBranchTests
             mockChat.Object,
             Mock.Of<ILogger<TelegramBotService>>());
 
+        var mockBotClient = new Mock<ITelegramBotClient>();
+
+        mockBotClient
+            .Setup(x => x.MakeRequestAsync(
+                It.IsAny<Telegram.Bot.Requests.SendMessageRequest>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Message());
+
+        var botField = typeof(TelegramBotService)
+            .GetField(
+                "_botClient",
+                System.Reflection.BindingFlags.NonPublic |
+                System.Reflection.BindingFlags.Instance);
+
+        Assert.NotNull(botField);
+
+        botField.SetValue(service, mockBotClient.Object);
+
         var update = new Update
         {
             Message = new Message
@@ -158,10 +189,12 @@ public class TelegramBotServiceBranchTests
             }
         };
 
-        await Record.ExceptionAsync(async () =>
+        var exception = await Record.ExceptionAsync(async () =>
         {
             await InvokeHandleUpdateAsync(service, update);
         });
+
+        Assert.Null(exception);
 
         mockChat.Verify(
             x => x.ProcessMessageAsync(
@@ -171,4 +204,3 @@ public class TelegramBotServiceBranchTests
             Times.Never);
     }
 }
-

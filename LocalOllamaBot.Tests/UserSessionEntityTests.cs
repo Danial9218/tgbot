@@ -1,6 +1,12 @@
 ﻿using LocalOllamaBot.Core.Entities;
 using Xunit;
 
+
+
+namespace LocalOllamaBot.Tests;
+
+    
+
 public class UserSessionEntityTests
 {
     [Fact]

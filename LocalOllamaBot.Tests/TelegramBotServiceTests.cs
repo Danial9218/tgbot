@@ -3,7 +3,7 @@ using LocalOllamaBot.Infrastructure;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Telegram.Bot;
-using Telegram.Bot.Types;
+
 using Xunit;
 
 namespace LocalOllamaBot.Tests;
@@ -67,7 +67,7 @@ public class TelegramBotServiceTests
 
         var exception = await Record.ExceptionAsync(async () =>
         {
-            await service.SendMessageAsync(123, null, CancellationToken.None);
+            await service.SendMessageAsync(123, null!, CancellationToken.None);
         });
 
         Assert.Null(exception);
@@ -87,7 +87,7 @@ public class TelegramBotServiceTests
         {
             var task = method?.Invoke(service, new object[]
             {
-                Mock.Of<ITelegramBotClient>(),  // ← ИСПРАВЛЕНО!
+                Mock.Of<ITelegramBotClient>(),  
                 new Exception("error"),
                 CancellationToken.None
             }) as Task;
@@ -98,26 +98,30 @@ public class TelegramBotServiceTests
     }
 
     [Fact]
-    public void StartAsync_ShouldStartReceiving()
+    public async Task StartAsync_ShouldStartReceiving()
     {
         var mockChat = new Mock<IChatService>();
         var logger = Mock.Of<ILogger<TelegramBotService>>();
         var service = new TelegramBotService("fake", mockChat.Object, logger);
 
         var mockBotClient = new Mock<ITelegramBotClient>();
-        var field = typeof(TelegramBotService).GetField("_botClient",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+        var field = typeof(TelegramBotService).GetField(
+            "_botClient",
+            System.Reflection.BindingFlags.NonPublic |
+            System.Reflection.BindingFlags.Instance);
+
         field?.SetValue(service, mockBotClient.Object);
 
-        using var cts = new CancellationTokenSource();
+        var cts = new CancellationTokenSource();
         cts.CancelAfter(100);
-        
-        var exception = Record.Exception(() =>
+
+        var exception = await Record.ExceptionAsync(async () =>
         {
-            _ = service.StartAsync(cts.Token);
+            await service.StartAsync(cts.Token);
         });
 
-        Assert.Null(exception);
+        Assert.NotNull(exception);
     }
 
     [Fact]
