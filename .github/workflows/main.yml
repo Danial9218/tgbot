@@ -30,6 +30,9 @@ jobs:
           --collect:"XPlat Code Coverage" \
           --results-directory ./TestResults
 
+    - name: Install bc (for math calculations)
+      run: sudo apt-get install -y bc
+
     - name: Extract and show coverage percentage
       run: |
         COVERAGE_FILE=$(find ./TestResults -name "coverage.cobertura.xml" | head -1)
